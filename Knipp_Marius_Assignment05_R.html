@@ -439,6 +439,120 @@ for (venue in venues) {
 
 # Create dataframe
 venues_df &lt;- ldply(venues_list, data.frame)</code></pre>
+<hr />
+</div>
+<div id="interacting-with-the-api---advanced" class="section level3">
+<h3>Interacting with the API - advanced</h3>
+<ol start="9" style="list-style-type: decimal">
+<li>Have a closer look at the list element named page. Did your
+<code>GET</code> request from exercise (7) return all event locations in
+Germany? Obviously not - there are of course much more venues in Germany
+than those contained in this list. Your <code>GET</code> request only
+yielded the first results page containing the first 20 out of several
+thousands of venues. Check the API documentation under the section Venue
+Search. How can you request the venues from the remaining results pages?
+Iterate over the results pages and perform <code>GET</code> requests for
+all venues in Germany. After each iteration, extract the seven variables
+<code>name</code>, <code>city</code>, <code>postalCode</code>,
+<code>address</code>, <code>url</code>, <code>longitude</code>, and
+<code>latitude</code>. Join the information in one large data frame.
+Print the first 10 rows and the shape of the resulting data frame.</li>
+</ol>
+<pre class="r"><code>get_venues &lt;- function(country){
+  
+  # Perform GET request to extract the number of total pages
+  content &lt;- GET(&#39;https://app.ticketmaster.com/discovery/v2/venues.json?&#39;,
+                 query = list(apikey = ticketmaster_key,
+                              locale = &#39;*&#39;,
+                              countryCode = country)) %&gt;% content()
+  n_pages &lt;- as.numeric(content$page$totalPages) - 1
+  
+  # Empty list to store data
+  venues_list &lt;- list()
+  
+  # Iterate through pages
+  for (page in 0:n_pages) {
+    # Limitation of 5 requests per second
+    Sys.sleep(.2)
+    
+    # Perform GET request of the page in a while statement, 
+    # because sometimes an error occurs, when performing the GET request
+    venues &lt;- NULL
+    while (is.null(venues)) {
+      content &lt;- GET(&#39;https://app.ticketmaster.com/discovery/v2/venues.json?&#39;,
+                     query = list(apikey = ticketmaster_key,
+                                  locale = &#39;*&#39;,
+                                  countryCode = country,
+                                  page = page)) %&gt;% content()
+      
+      venues &lt;- content[[&#39;_embedded&#39;]][[&#39;venues&#39;]]
+    }
+    
+    # Iterate through venues on the page
+    for (venue in venues) {
+      # Extract the information and store it in a list
+      venues_holder &lt;- list()
+      venues_holder[&#39;name&#39;] &lt;- venue$name
+      venues_holder[&#39;city&#39;] &lt;- venue$city$name
+      venues_holder[&#39;postalCode&#39;] &lt;- venue$postalCode
+      venues_holder[&#39;address&#39;] &lt;- venue$address$line1
+      
+      if (is.null(venues_holder[&#39;address&#39;])) {
+        venues_holder[&#39;address&#39;] &lt;- venue$address$line2
+      }
+      
+      venues_holder[&#39;url&#39;] &lt;- venue$url
+      venues_holder[&#39;longitude&#39;] &lt;- venue$location$longitude
+      venues_holder[&#39;latitude&#39;] &lt;- venue$location$latitude
+      
+      # Append to the venues_list
+      venues_list[[length(venues_list) + 1]] &lt;- venues_holder
+    }
+  }
+  
+  # Convert list of lists to a data frame
+  venues_df &lt;- ldply(venues_list, data.frame)
+  return(venues_df)
+}
+
+venues_germany &lt;- get_venues(&#39;DE&#39;)
+
+head(venues_germany, 10)</code></pre>
+<pre><code>##                        name         city postalCode               address
+## 1        Grosse Freiheit 36      Hamburg      22767    Grosse Freiheit 36
+## 2                 Gruenspan      Hamburg      22767    Grosse Freiheit 58
+## 3         Huxleys Neue Welt       Berlin      10967  Hasenheide 107 – 113
+## 4           Zentrum am Park Emmelshausen      56281 Rhein-Mosel-Straße 45
+## 5  Stadthalle (Theatersaal)      Mülheim      45479 Theodor-Heuss-Platz 1
+## 6             Schlossgarten     Bruchsal      76646      Schloss Bruchsal
+## 7                Stadthalle   Hockenheim      68766       Rathausstraße 3
+## 8                       FZW     Dortmund      44263       Ritterstraße 20
+## 9               Arena Trier        Trier      54292    Fort-Worth-Platz 1
+## 10            Eissporthalle    Memmingen      87700   Hühnerbergstraße 19
+##                                                                                         url
+## 1                                                   http://www.ticketmaster.de/venue/287636
+## 2                                                   http://www.ticketmaster.de/venue/287155
+## 3                                                   http://www.ticketmaster.de/venue/286842
+## 4     https://www.ticketmaster.de/venue/zentrum-am-park-emmelshausen-tickets/elszentrum/701
+## 5  https://www.ticketmaster.de/venue/stadthalle-theatersaal--mulheim-tickets/mrustadtth/711
+## 6           https://www.ticketmaster.de/venue/schlossgarten-bruchsal-tickets/bruparkanl/701
+## 7            https://www.ticketmaster.de/venue/stadthalle-hockenheim-tickets/hokstadtha/701
+## 8                         https://www.ticketmaster.de/venue/fzw-dortmund-tickets/dorfzw/701
+## 9                  https://www.ticketmaster.de/venue/arena-trier-trier-tickets/triarena/701
+## 10         https://www.ticketmaster.de/venue/eissporthalle-memmingen-tickets/mmmeisspor/701
+##    longitude  latitude
+## 1   9.957905 53.551187
+## 2   9.958075 53.551885
+## 3   13.42138 52.486391
+## 4    7.55656  50.15544
+## 5    6.87471  51.42778
+## 6    8.59908  49.12692
+## 7    8.54908  49.31849
+## 8     7.4501  51.51481
+## 9    6.66426  49.77183
+## 10  10.16293  47.97999</code></pre>
+<pre class="r"><code>dim(venues_germany)</code></pre>
+<pre><code>## [1] 12932     7</code></pre>
 </div>
 
 

@@ -65,3 +65,74 @@ for (venue in venues) {
 # Create dataframe
 venues_df <- ldply(venues_list, data.frame)
 ```
+
+
+***
+### Interacting with the API - advanced
+
+9. Have a closer look at the list element named page. Did your `GET` request from exercise (7) return all event locations in Germany? Obviously not - there are of course much more venues in Germany than those contained in this list. Your `GET` request only yielded the first results page containing the first 20 out of several thousands of venues. Check the API documentation under the section Venue Search. How can you request the venues from the remaining results pages? Iterate over the results pages and perform `GET` requests for all venues in Germany. After each iteration, extract the seven variables `name`, `city`, `postalCode`, `address`, `url`, `longitude`, and `latitude`. Join the information in one large data frame. Print the first 10 rows and the shape of the resulting data frame. 
+
+```{r}
+get_venues <- function(country){
+  
+  # Perform GET request to extract the number of total pages
+  content <- GET('https://app.ticketmaster.com/discovery/v2/venues.json?',
+                 query = list(apikey = ticketmaster_key,
+                              locale = '*',
+                              countryCode = country)) %>% content()
+  n_pages <- as.numeric(content$page$totalPages) - 1
+  
+  # Empty list to store data
+  venues_list <- list()
+  
+  # Iterate through pages
+  for (page in 0:n_pages) {
+    # Limitation of 5 requests per second
+    Sys.sleep(.2)
+    
+    # Perform GET request of the page in a while statement, 
+    # because sometimes an error occurs, when performing the GET request
+    venues <- NULL
+    while (is.null(venues)) {
+      content <- GET('https://app.ticketmaster.com/discovery/v2/venues.json?',
+                     query = list(apikey = ticketmaster_key,
+                                  locale = '*',
+                                  countryCode = country,
+                                  page = page)) %>% content()
+      
+      venues <- content[['_embedded']][['venues']]
+    }
+    
+    # Iterate through venues on the page
+    for (venue in venues) {
+      # Extract the information and store it in a list
+      venues_holder <- list()
+      venues_holder['name'] <- venue$name
+      venues_holder['city'] <- venue$city$name
+      venues_holder['postalCode'] <- venue$postalCode
+      venues_holder['address'] <- venue$address$line1
+      
+      if (is.null(venues_holder['address'])) {
+        venues_holder['address'] <- venue$address$line2
+      }
+      
+      venues_holder['url'] <- venue$url
+      venues_holder['longitude'] <- venue$location$longitude
+      venues_holder['latitude'] <- venue$location$latitude
+      
+      # Append to the venues_list
+      venues_list[[length(venues_list) + 1]] <- venues_holder
+    }
+  }
+  
+  # Convert list of lists to a data frame
+  venues_df <- ldply(venues_list, data.frame)
+  return(venues_df)
+}
+
+venues_germany <- get_venues('DE')
+
+head(venues_germany, 10)
+
+dim(venues_germany)
+```
