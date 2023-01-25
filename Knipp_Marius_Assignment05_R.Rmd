@@ -8,6 +8,7 @@ output: html_document
 ```{r, message=FALSE}
 library(jsonlite)
 library(httr)
+library(plyr)
 library(tidyverse)
 ```
 
@@ -39,3 +40,28 @@ names(content[['_embedded']][['venues']][[1]])
 ```
 
 *Answer: The list contains 20 venues in Germany with various information about each venue (e.g. name, URL, city etc.). These 20 venues are only on the first page. In total, there are 647 pages with 20 venues each, adding up to 12932 venues in Germany.*
+
+
+8. Extract the `name`, the `city`, the `postalCode` and `address`, as well as the `url` and the `longitude` and `latitude` of the venues to a data frame.
+
+```{r}
+venues <- content[['_embedded']][['venues']]
+
+venues_list <- list()
+
+for (venue in venues) {
+  venues_holder <- list()
+  venues_holder['name'] <- venue$name
+  venues_holder['city'] <- venue$city$name
+  venues_holder['postalCode'] <- venue$postalCode
+  venues_holder['address'] <- venue$address$line1
+  venues_holder['url'] <- venue$url
+  venues_holder['longitude'] <- venue$location$longitude
+  venues_holder['latitude'] <- venue$location$latitude
+  
+  venues_list[[length(venues_list) + 1]] <- venues_holder
+}
+
+# Create dataframe
+venues_df <- ldply(venues_list, data.frame)
+```

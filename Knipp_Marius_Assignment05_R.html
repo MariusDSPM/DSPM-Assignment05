@@ -360,6 +360,7 @@ ticketmaster.com API</h1>
 
 <pre class="r"><code>library(jsonlite)
 library(httr)
+library(plyr)
 library(tidyverse)</code></pre>
 <hr />
 <div id="getting-to-know-the-api" class="section level3">
@@ -413,6 +414,31 @@ content$page</code></pre>
 information about each venue (e.g. name, URL, city etc.). These 20
 venues are only on the first page. In total, there are 647 pages with 20
 venues each, adding up to 12932 venues in Germany.</em></p>
+<ol start="8" style="list-style-type: decimal">
+<li>Extract the <code>name</code>, the <code>city</code>, the
+<code>postalCode</code> and <code>address</code>, as well as the
+<code>url</code> and the <code>longitude</code> and
+<code>latitude</code> of the venues to a data frame.</li>
+</ol>
+<pre class="r"><code>venues &lt;- content[[&#39;_embedded&#39;]][[&#39;venues&#39;]]
+
+venues_list &lt;- list()
+
+for (venue in venues) {
+  venues_holder &lt;- list()
+  venues_holder[&#39;name&#39;] &lt;- venue$name
+  venues_holder[&#39;city&#39;] &lt;- venue$city$name
+  venues_holder[&#39;postalCode&#39;] &lt;- venue$postalCode
+  venues_holder[&#39;address&#39;] &lt;- venue$address$line1
+  venues_holder[&#39;url&#39;] &lt;- venue$url
+  venues_holder[&#39;longitude&#39;] &lt;- venue$location$longitude
+  venues_holder[&#39;latitude&#39;] &lt;- venue$location$latitude
+  
+  venues_list[[length(venues_list) + 1]] &lt;- venues_holder
+}
+
+# Create dataframe
+venues_df &lt;- ldply(venues_list, data.frame)</code></pre>
 </div>
 
 
