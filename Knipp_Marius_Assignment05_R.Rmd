@@ -186,3 +186,20 @@ lat_max <- 55.059
 plot_venues(venues_germany, 'Germany', lo_min, lo_max, lat_min, lat_max)
 ```
 
+
+***
+### Event locations in other countries
+
+12. Repeat exercises (9)–(11) for another European country of your choice. (Hint: Clean code pays off! If you have coded the exercises efficiently, only very few adaptions need to be made.)
+
+```{r, warning=FALSE}
+venues_netherlands <- get_venues('NL')
+
+# Extreme points of the Netherlands
+lo_min <- 3.358
+lo_max <- 7.228
+lat_min <- 50.75
+lat_max <- 53.555
+
+plot_venues(venues_netherlands, 'Netherlands', lo_min, lo_max, lat_min, lat_max)
+```
