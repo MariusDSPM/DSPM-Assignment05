@@ -136,3 +136,53 @@ head(venues_germany, 10)
 
 dim(venues_germany)
 ```
+
+
+***
+### Visualizing the extracted data
+
+10. Below, you can find code that produces a map of Germany. Add points to the map indicating the locations of the event venues across Germany.
+
+
+11. You will find that some coordinates lie way beyond the German borders and can be assumed to be faulty. Set coordinate values to `NA` where the value of `longitude` is outside the range (`5.866, 15.042`) or where the value of `latitude` is outside the range (`47.270, 55.059`).
+
+
+```{r, warning=FALSE}
+plot_venues <- function(venues, country, lo_min, lo_max, lat_min, lat_max){
+  
+  # Change data type of 'longitude' and 'latitude' to numeric
+  venues$longitude <- as.numeric(venues$longitude)
+  venues$latitude <- as.numeric(venues$latitude)
+  
+  # Set coordinates outside the range to NaN
+  venues$longitude[
+    venues$longitude < lo_min | venues$longitude > lo_max] <- NA
+  
+  venues$latitude[
+    venues$latitude < lat_min | venues$latitude > lat_max] <- NA
+  
+  # Plot the map with venues
+  x = venues$longitude
+  y = venues$latitude
+  
+  ggplot(venues, aes(x, y)) +
+    borders("world", country, colour = "black", fill = "grey90") +
+    theme_void() +
+    coord_quickmap() +
+    labs(title = paste('Event locations across', country),
+         caption = "Source: ticketmaster.com") +
+    theme(title = element_text(size = 8, face = 'bold'),
+          plot.caption = element_text(face = "italic")) +
+    geom_point()
+  
+}
+
+# Extreme points of Germany
+lo_min <- 5.866
+lo_max <- 15.042
+lat_min <- 47.270
+lat_max <- 55.059
+
+plot_venues(venues_germany, 'Germany', lo_min, lo_max, lat_min, lat_max)
+```
+
