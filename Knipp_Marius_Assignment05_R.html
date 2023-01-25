@@ -358,6 +358,9 @@ ticketmaster.com API</h1>
 </div>
 
 
+<pre class="r"><code>library(jsonlite)
+library(httr)
+library(tidyverse)</code></pre>
 <hr />
 <div id="getting-to-know-the-api" class="section level3">
 <h3>Getting to know the API</h3>
@@ -373,6 +376,43 @@ in the code that you are submitting nor in your public GitHub
 repository.</li>
 </ol>
 <pre class="r"><code>source(&#39;ticketmaster_key.R&#39;)</code></pre>
+<hr />
+</div>
+<div id="interacting-with-the-api---the-basics" class="section level3">
+<h3>Interacting with the API - the basics</h3>
+<ol start="7" style="list-style-type: decimal">
+<li>Perform a first <code>GET</code> request, that searches for event
+venues in Germany (<code>countryCode = &quot;DE&quot;</code>). Extract the content
+from the response object and inspect the resulting list. Describe what
+you can see.</li>
+</ol>
+<pre class="r"><code>content &lt;- GET(&#39;https://app.ticketmaster.com/discovery/v2/venues.json?&#39;,
+               query = list(apikey = ticketmaster_key,
+                            locale = &#39;*&#39;,
+                            countryCode = &#39;DE&#39;)) %&gt;% content()
+
+content$page</code></pre>
+<pre><code>## $size
+## [1] 20
+## 
+## $totalElements
+## [1] 12932
+## 
+## $totalPages
+## [1] 647
+## 
+## $number
+## [1] 0</code></pre>
+<pre class="r"><code>names(content[[&#39;_embedded&#39;]][[&#39;venues&#39;]][[1]])</code></pre>
+<pre><code>##  [1] &quot;name&quot;           &quot;type&quot;           &quot;id&quot;             &quot;test&quot;          
+##  [5] &quot;url&quot;            &quot;locale&quot;         &quot;images&quot;         &quot;postalCode&quot;    
+##  [9] &quot;timezone&quot;       &quot;city&quot;           &quot;country&quot;        &quot;address&quot;       
+## [13] &quot;location&quot;       &quot;markets&quot;        &quot;dmas&quot;           &quot;boxOfficeInfo&quot; 
+## [17] &quot;upcomingEvents&quot; &quot;ada&quot;            &quot;_links&quot;</code></pre>
+<p><em>Answer: The list contains 20 venues in Germany with various
+information about each venue (e.g. name, URL, city etc.). These 20
+venues are only on the first page. In total, there are 647 pages with 20
+venues each, adding up to 12932 venues in Germany.</em></p>
 </div>
 
 

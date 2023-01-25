@@ -5,6 +5,13 @@ date: "2023-01-25"
 output: html_document
 ---
 
+```{r, message=FALSE}
+library(jsonlite)
+library(httr)
+library(tidyverse)
+```
+
+
 ***
 ### Getting to know the API
 
@@ -14,3 +21,21 @@ output: html_document
 ```{r}
 source('ticketmaster_key.R')
 ```
+
+***
+### Interacting with the API - the basics
+
+7. Perform a first `GET` request, that searches for event venues in Germany (`countryCode = "DE"`). Extract the content from the response object and inspect the resulting list. Describe what you can see.
+
+```{r}
+content <- GET('https://app.ticketmaster.com/discovery/v2/venues.json?',
+               query = list(apikey = ticketmaster_key,
+                            locale = '*',
+                            countryCode = 'DE')) %>% content()
+
+content$page
+
+names(content[['_embedded']][['venues']][[1]])
+```
+
+*Answer: The list contains 20 venues in Germany with various information about each venue (e.g. name, URL, city etc.). These 20 venues are only on the first page. In total, there are 647 pages with 20 venues each, adding up to 12932 venues in Germany.*
